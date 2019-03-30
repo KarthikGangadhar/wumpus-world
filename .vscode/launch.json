@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/check_true_false.py",
             "args": [
-                "wumpus_rules.txt",
+                // "wumpus_rules.txt",
                 // "additional_knowledge_file",
                 // "kb3.txt",
                 // "statement_file"

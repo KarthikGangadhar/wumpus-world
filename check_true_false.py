@@ -20,6 +20,9 @@
 import sys
 from logical_expression import *
 
+def check_true_false(knowledge_base, statement):
+    pass
+
 def main(argv):
     if len(argv) != 4:
         print('Usage: %s [wumpus-rules-file] [additional-knowledge-file] [input_file]' % argv[0])
@@ -68,7 +71,7 @@ def main(argv):
         sys.exit('invalid knowledge base')
 
     # I had left this line out of the original code. If things break, comment out.
-    print_expression(knowledgebase, '\n')
+    print_expression(knowledge_base, '\n')
 
     # Read statement whose entailment we want to determine
     try:
@@ -93,7 +96,7 @@ def main(argv):
     # Run the statement through the inference engine
     check_true_false(knowledge_base, statement)
 
-    sys.exit(1)
+    # sys.exit(1)
     
 
 if __name__ == '__main__':
