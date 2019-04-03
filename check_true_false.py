@@ -62,7 +62,7 @@ def main(argv):
         sys.exit(0)
 
     # Add expressions to knowledge base
-    print 'Loading additional knowledge...'
+    print '\n\nLoading additional knowledge...'
     
     try:
         for line in input_file:
@@ -96,19 +96,9 @@ def main(argv):
     except:
         print('failed to open file %s' % argv[3])
         sys.exit(0)
-    print 'Loading statement...'
+    print '\n\nLoading statement...'
     statement = input_file.readline().rstrip('\r\n')
     input_file.close()
-
-    # Convert statement into a logical expression and verify it is valid
-    # statement = read_expression(statement)
-    # if not valid_expression(statement):
-    #     sys.exit('invalid statement')
-
-    # # Show us what the statement is
-    # print '\nChecking statement: ',
-    # print_expression(statement, '')
-    # print
 
     # Run the statement through the inference engine
     check_true_false(knowledge_base, statement, symbols)      

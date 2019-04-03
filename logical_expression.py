@@ -166,16 +166,16 @@ def valid_symbol(symbol):
 
 # Add all your functions here
 
-def get_symbols(symbols, kb=[],st=[]):
-    if not kb==[]:
+def get_symbols(symbols, kb =None, statement = None):
+    if kb is not None:
         if kb.symbol[0]:
             symbols.append(kb.symbol[0])
         for i in kb.subexpressions:
             get_symbols(symbols,i)
-    if not st==[]:
-        if st.symbol[0]:
-            symbols.append(st.symbol[0])
-        for i in st.subexpressions:
+    if statement is not None:
+        if statement.symbol[0]:
+            symbols.append(statement.symbol[0])
+        for i in statement.subexpressions:
             get_symbols(symbols,i)
 
     return symbols
@@ -226,29 +226,28 @@ def eval(expression,model):
      
     return model[expression.symbol[0]]
         
-def extend(sym,val,m):
-    m[sym]=val
-    return m
+def update(symbol, value, model):
+    model[symbol] = value
+    return model
 
-def ttcheckall(kb,a,sym,m):
-    if not sym:
-        aa=eval(kb,m)
-        if aa:
-            bb=eval(a,m)
-            return bb
+def check_tt_entail(knowledge_base, statement, symbols, model):
+    if not symbols:
+        result = eval(knowledge_base, model)
+        if result:
+            result = eval(statement,model)
+            return result
         else:
             return True
     else:
-        s = sym[0]
-        r = sym[1:]
-        return ttcheckall(kb,a,r,extend(s,True,m)) and ttcheckall(kb,a,r,extend(s,False,m))
+        symbol, remaining = symbols[0], symbols[1:]
+        return check_tt_entail(knowledge_base,statement,remaining,update(symbol,True,model)) and check_tt_entail(knowledge_base,statement,remaining,update(symbol,False,model))
 
 def check_true_false(knowledgebase, statement, model):
     symbols = []
     negation = '(not '+ statement + ')'
 
     # Convert statement into a negative logical stament and verify it is valid
-    statement = read_expression(statement)
+    statement = read_expression( statement )
     if not valid_expression(statement):
         sys.exit('invalid statement')
 
@@ -257,22 +256,23 @@ def check_true_false(knowledgebase, statement, model):
     print_expression(statement, '')
     print
     
-    #loading symbols.
-    symbols = get_symbols(symbols,knowledgebase,statement)
+    #getting symbols.
+    symbols = get_symbols(symbols, knowledgebase, statement)
     #elemenate the duplicates
-    symbols=list(set(symbols))
+    symbols = list(set(symbols))
     
-    symbols=copy.deepcopy(symbols)
+    symbols = copy.deepcopy(symbols)
     for i in model.keys():
        symbols.remove(i)
 
-    counter = [0]
-    negative_statement = read_expression(negation,counter)
-    true = ttcheckall(knowledgebase, statement, symbols, model)
-    false= ttcheckall(knowledgebase, negative_statement, symbols, model)
+    negative_statement = read_expression(negation,[0])
+
+    #check ttentail for both statement and its conjugate
+    statement1 = check_tt_entail(knowledgebase, statement, symbols, model)
+    statement2 = check_tt_entail(knowledgebase, negative_statement, symbols, model)
     
     # get equivalent output string
-    result = get_result_statement(true, false)
+    result = get_result_statement(statement1, statement2)
     # write it into result file
     print(result)
     write_result(result)
