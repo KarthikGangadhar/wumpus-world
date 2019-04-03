@@ -25,7 +25,7 @@
 
 import sys
 from copy import copy
-
+import copy
 #-------------------------------------------------------------------------------
 # Begin code that is ported from code provided by Dr. Athitsos
 class logical_expression:
@@ -165,3 +165,114 @@ def valid_symbol(symbol):
 #-------------------------------------------------------------------------------
 
 # Add all your functions here
+
+def get_symbols(symbols, kb=[],st=[]):
+    if not kb==[]:
+        if kb.symbol[0]:
+            symbols.append(kb.symbol[0])
+        for i in kb.subexpressions:
+            get_symbols(symbols,i)
+    if not st==[]:
+        if st.symbol[0]:
+            symbols.append(st.symbol[0])
+        for i in st.subexpressions:
+            get_symbols(symbols,i)
+
+    return symbols
+
+def get_result_statement(statement1, statement2):
+    if statement1 and not statement2:
+        return 'Definitely True.'
+    elif not statement1 and statement2:
+        return "Definitely False."
+    elif not statement1 and not statement2:
+        return "Possibly True, Possibly False."
+    else:
+        return "Both True and False."    
+
+def write_result(result):
+    output_file = open('result.txt','w')
+    output_file.write(result)
+    output_file.close()
+
+def eval(expression,model):
+    if expression.connective[0]=='and':
+        for i,sub in enumerate(expression.subexpressions):
+            if i==0:
+                val=eval(sub,model)
+                continue
+            val=val and eval(sub,model)
+        return val
+    elif expression.connective[0]=='or':
+        for i,sub in enumerate(expression.subexpressions):
+            if i==0:
+                val=eval(sub,model)
+                continue
+            val=val or eval(sub, model)
+        return val
+    elif expression.connective[0]=='not':
+        return not eval(expression.subexpressions[0],model)
+    elif expression.connective[0]=='xor':
+        for i, sub in enumerate(expression.subexpressions):
+            if i==0:
+                val=eval(sub, model)
+                continue
+            val=(val and not eval(sub,model)) or (not val and eval(sub,model))
+        return val
+    elif expression.connective[0]=='if':
+        return  (not eval(expression.subexpressions[0],model)) or eval(expression.subexpressions[1],model)
+    elif expression.connective[0] == 'iff':
+        return (eval(expression.subexpressions[0],model) and eval(expression.subexpressions[1],model))
+     
+    return model[expression.symbol[0]]
+        
+def extend(sym,val,m):
+    m[sym]=val
+    return m
+
+def ttcheckall(kb,a,sym,m):
+    if not sym:
+        aa=eval(kb,m)
+        if aa:
+            bb=eval(a,m)
+            return bb
+        else:
+            return True
+    else:
+        s = sym[0]
+        r = sym[1:]
+        return ttcheckall(kb,a,r,extend(s,True,m)) and ttcheckall(kb,a,r,extend(s,False,m))
+
+def check_true_false(knowledgebase, statement, model):
+    symbols = []
+    negation = '(not '+ statement + ')'
+
+    # Convert statement into a negative logical stament and verify it is valid
+    statement = read_expression(statement)
+    if not valid_expression(statement):
+        sys.exit('invalid statement')
+
+    # Show us what the statement is
+    print '\nChecking statement: ',
+    print_expression(statement, '')
+    print
+    
+    #loading symbols.
+    symbols = get_symbols(symbols,knowledgebase,statement)
+    #elemenate the duplicates
+    symbols=list(set(symbols))
+    
+    symbols=copy.deepcopy(symbols)
+    for i in model.keys():
+       symbols.remove(i)
+
+    counter = [0]
+    negative_statement = read_expression(negation,counter)
+    true = ttcheckall(knowledgebase, statement, symbols, model)
+    false= ttcheckall(knowledgebase, negative_statement, symbols, model)
+    
+    # get equivalent output string
+    result = get_result_statement(true, false)
+    # write it into result file
+    print(result)
+    write_result(result)

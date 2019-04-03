@@ -20,10 +20,10 @@
 import sys
 from logical_expression import *
 
-def check_true_false(knowledge_base, statement):
-    pass
 
 def main(argv):
+    symbols = {}
+
     if len(argv) != 4:
         print('Usage: %s [wumpus-rules-file] [additional-knowledge-file] [input_file]' % argv[0])
         sys.exit(0)
@@ -45,6 +45,12 @@ def main(argv):
             continue
         counter = [0]  # A mutable counter so recursive calls don't just make a copy
         subexpression = read_expression(line.rstrip('\r\n'), counter)
+
+        if subexpression.connective[0] == '':
+            symbols[subexpression.symbol[0]] = True 
+        if subexpression.connective[0]=='not':
+            symbols[subexpression.subexpressions[0].symbol[0]]=False
+        
         knowledge_base.subexpressions.append(subexpression)
     input_file.close()
 
@@ -57,14 +63,25 @@ def main(argv):
 
     # Add expressions to knowledge base
     print 'Loading additional knowledge...'
-    for line in input_file:
-        # Skip comments and blank lines. Consider all line ending types.
-        if line[0] == '#' or line == '\r\n' or line == '\n' or line == '\r':
-            continue
-        counter = [0]  # a mutable counter
-        subexpression = read_expression(line.rstrip('\r\n'), counter)
-        knowledge_base.subexpressions.append(subexpression)
-    input_file.close()
+    
+    try:
+        for line in input_file:
+            # Skip comments and blank lines. Consider all line ending types.
+            if line[0] == '#' or line == '\r\n' or line == '\n' or line == '\r':
+                continue
+            counter = [0]  # a mutable counter
+            subexpression = read_expression(line.rstrip('\r\n'), counter)
+
+            if subexpression.connective[0] == '':
+                symbols[subexpression.symbol[0]] = True 
+            if subexpression.connective[0]=='not':
+                symbols[subexpression.subexpressions[0].symbol[0]] = False
+        
+            knowledge_base.subexpressions.append(subexpression)
+        input_file.close()
+
+    except Exception, e:
+        print(e)
 
     # Verify it is a valid logical expression
     if not valid_expression(knowledge_base):
@@ -82,22 +99,21 @@ def main(argv):
     print 'Loading statement...'
     statement = input_file.readline().rstrip('\r\n')
     input_file.close()
-    
-    # Convert statement into a logical expression and verify it is valid
-    statement = read_expression(statement)
-    if not valid_expression(statement):
-        sys.exit('invalid statement')
 
-    # Show us what the statement is
-    print '\nChecking statement: ',
-    print_expression(statement, '')
-    print
+    # Convert statement into a logical expression and verify it is valid
+    # statement = read_expression(statement)
+    # if not valid_expression(statement):
+    #     sys.exit('invalid statement')
+
+    # # Show us what the statement is
+    # print '\nChecking statement: ',
+    # print_expression(statement, '')
+    # print
 
     # Run the statement through the inference engine
-    check_true_false(knowledge_base, statement)
-
-    # sys.exit(1)
-    
+    check_true_false(knowledge_base, statement, symbols)      
+  
+    sys.exit(1)
 
 if __name__ == '__main__':
     main(sys.argv)
